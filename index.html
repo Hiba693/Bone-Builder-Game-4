@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bone Builder: Fill the Skeleton</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Strict single-screen zero-scroll setup */
+        html, body {
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Maximized, high-visibility tube label typography with larger badge boxes */
+        .tube-label {
+            font-size: clamp(1rem, 2.5vw, 1.6rem);
+            line-height: 1.1;
+            font-weight: 900;
+            letter-spacing: -0.015em;
+            word-break: normal;
+            overflow-wrap: break-word;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        /* Liquid fill animation inside test tube */
+        .liquid-fill {
+            transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Pulse glow animation for active/selected tubes */
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 18px rgba(6, 182, 212, 0.7); }
+            50% { box-shadow: 0 0 28px rgba(6, 182, 212, 1); }
+        }
+        .tube-selected {
+            animation: pulse-glow 1.5s infinite;
+        }
+
+        /* Skeleton glowing fluid inside bone */
+        .bone-liquid {
+            transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 text-white flex flex-col justify-between h-screen w-screen overflow-hidden p-1 sm:p-2">
+
+    <!-- HEADER SECTION WITH ENLARGED TITLE & INSTRUCTIONS -->
+    <header class="flex-none flex flex-col gap-0.5 bg-slate-900/90 backdrop-blur-md border-2 border-slate-700/80 rounded-xl px-3 sm:px-4 py-1.5 shadow-xl z-20">
+        <div class="flex items-center justify-between w-full">
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <span class="text-2xl sm:text-4xl">🦴</span>
+                <div>
+                    <!-- ENLARGED "BONE BUILDER" TITLE -->
+                    <h1 class="text-lg sm:text-2xl lg:text-3xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-sky-300 to-blue-300">Bone Builder</h1>
+                    <p class="text-[11px] sm:text-xs text-slate-300 font-bold hidden xs:block">Fill the Skeleton with Healthy Choices!</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <div class="bg-slate-950 border-2 border-cyan-500/60 px-3 py-1 rounded-xl flex items-center space-x-2 shadow-inner">
+                    <span class="text-[11px] sm:text-sm font-black text-slate-200 uppercase tracking-wide">Bone Density:</span>
+                    <span id="density-score" class="text-base sm:text-xl font-black text-cyan-400">0%</span>
+                </div>
+                <button onclick="resetGame()" class="bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs sm:text-sm font-black px-3 py-1 rounded-xl transition border border-slate-500 shadow-md">
+                    🔄 Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- ENLARGED INSTRUCTION BANNER -->
+        <div class="text-center bg-slate-950/80 border border-cyan-500/50 rounded-lg py-0.5 px-2">
+            <p class="text-sm sm:text-lg lg:text-xl font-black text-cyan-300 tracking-wide drop-shadow">
+                💡 Tap test tubes to find bone-preserving choices and fill the skeleton!
+            </p>
+        </div>
+    </header>
+
+    <!-- MAIN GAME CONTAINER (STRICTLY 1 SCREEN, NO SCROLL) -->
+    <main class="flex-grow flex items-center justify-between w-full max-w-7xl mx-auto px-1 sm:px-2 pt-0 pb-4 sm:pb-6 min-h-0 relative">
+
+        <!-- LEFT SIDE: 3 Top Outer Tubes + 2 Lower Inner Tubes (Expanded widths for big labels) -->
+        <div class="flex w-[37%] max-w-[340px] h-[94%] max-h-[74vh] justify-between items-center relative -translate-y-3">
+            <!-- Left Top Outer Column (3 Test Tubes) -->
+            <div id="left-tubes-top" class="flex flex-col justify-around w-[49%] h-[84%] pt-0.5">
+                <!-- Injected via JS -->
+            </div>
+            <!-- Left Inner Lower Column (2 Test Tubes Near Bone) -->
+            <div id="left-tubes-bottom" class="flex flex-col justify-around w-[49%] h-[74%] pb-3">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- CENTER COLUMN: Realistic Anatomical Bone & Center Message Area -->
+        <div class="flex flex-col items-center justify-center w-[26%] h-[94%] px-0.5 relative -translate-y-5">
+            
+            <!-- CENTER OVERLAY FEEDBACK MESSAGE -->
+            <div id="feedback-overlay" class="absolute inset-x-0 top-1/2 -translate-y-1/2 z-30 flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-300 px-1">
+                <div id="feedback-box" class="w-full max-w-lg py-4 px-5 rounded-3xl shadow-2xl border-4 text-center transform scale-95 transition-transform duration-300 backdrop-blur-2xl">
+                    <div id="feedback-icon" class="text-4xl sm:text-6xl mb-1">✅</div>
+                    <h3 id="feedback-title" class="text-lg sm:text-2xl font-black uppercase tracking-wider mb-1">Correct!</h3>
+                    <p id="feedback-text" class="text-sm sm:text-lg font-extrabold leading-snug">This helps build strong bones.</p>
+                </div>
+            </div>
+
+            <!-- CENTRAL ANATOMICAL BONE VISUALIZATION -->
+            <div class="relative w-full h-full max-h-[72vh] flex items-center justify-center">
+                <!-- SVG Anatomically Detailed Bone Silhouette -->
+                <svg viewBox="0 0 200 400" class="h-full max-h-full drop-shadow-[0_0_20px_rgba(6,182,212,0.4)]">
+                    <defs>
+                        <clipPath id="bone-clip">
+                            <!-- Anatomical Femur/Bone Path -->
+                            <path d="
+                                M 65,45
+                                C 45,28 42,12 60,6
+                                C 78,0 92,15 100,24
+                                C 108,15 122,0 140,6
+                                C 158,12 155,28 135,45
+                                C 122,58 118,90 116,140
+                                C 114,190 114,210 116,260
+                                C 118,310 122,342 135,355
+                                C 155,372 158,388 140,394
+                                C 122,400 108,385 100,376
+                                C 92,385 78,400 60,394
+                                C 42,388 45,372 65,355
+                                C 78,342 82,310 84,260
+                                C 86,210 86,190 84,140
+                                C 82,90 78,58 65,45
+                                Z" />
+                        </clipPath>
+                        <linearGradient id="liquid-gradient" x1="0%" y1="100%" x2="0%" y2="0%">
+                            <stop offset="0%" stop-color="#06b6d4" />
+                            <stop offset="50%" stop-color="#3b82f6" />
+                            <stop offset="100%" stop-color="#60a5fa" />
+                        </linearGradient>
+                    </defs>
+
+                    <!-- Ghost Background Bone Outline -->
+                    <path d="
+                        M 65,45
+                        C 45,28 42,12 60,6
+                        C 78,0 92,15 100,24
+                        C 108,15 122,0 140,6
+                        C 158,12 155,28 135,45
+                        C 122,58 118,90 116,140
+                        C 114,190 114,210 116,260
+                        C 118,310 122,342 135,355
+                        C 155,372 158,388 140,394
+                        C 122,400 108,385 100,376
+                        C 92,385 78,400 60,394
+                        C 42,388 45,372 65,355
+                        C 78,342 82,310 84,260
+                        C 86,210 86,190 84,140
+                        C 82,90 78,58 65,45
+                        Z" 
+                        fill="rgba(15, 23, 42, 0.85)" stroke="#38bdf8" stroke-width="3.5" />
+
+                    <!-- Anatomical Detail Lines -->
+                    <path d="M 85,35 C 95,25 105,25 115,35" stroke="rgba(56, 189, 248, 0.3)" stroke-width="2" fill="none" />
+                    <path d="M 85,365 C 95,375 105,375 115,365" stroke="rgba(56, 189, 248, 0.3)" stroke-width="2" fill="none" />
+
+                    <!-- Liquid Fill inside Bone -->
+                    <g clip-path="url(#bone-clip)">
+                        <rect id="bone-liquid-rect" x="0" y="400" width="200" height="400" fill="url(#liquid-gradient)" class="bone-liquid" />
+                        <!-- Subtle Liquid Highlight Layer -->
+                        <path d="M0,0 Q50,12 100,0 T200,0 L200,400 L0,400 Z" fill="rgba(255,255,255,0.2)" />
+                    </g>
+                </svg>
+
+                <!-- Center Bone Density Indicator -->
+                <div class="absolute -bottom-2 bg-slate-950/90 border-2 border-cyan-400 px-3 py-1 rounded-full shadow-xl">
+                    <span id="center-density-text" class="text-sm sm:text-lg lg:text-xl font-black text-cyan-300 whitespace-nowrap">Bone Strength: 0%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE: 2 Lower Inner Tubes (Near Bone) + 3 Top Outer Tubes (Expanded widths for big labels) -->
+        <div class="flex w-[37%] max-w-[340px] h-[94%] max-h-[74vh] justify-between items-center relative -translate-y-3">
+            <!-- Right Inner Lower Column (2 Test Tubes Near Bone) -->
+            <div id="right-tubes-bottom" class="flex flex-col justify-around w-[49%] h-[74%] pb-3">
+                <!-- Injected via JS -->
+            </div>
+            <!-- Right Top Outer Column (3 Test Tubes) -->
+            <div id="right-tubes-top" class="flex flex-col justify-around w-[49%] h-[84%] pt-0.5">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- VICTORY MODAL POPUP -->
+    <div id="victory-modal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="bg-gradient-to-b from-slate-900 to-indigo-950 border-4 border-amber-400 rounded-3xl p-5 sm:p-8 max-w-md w-full text-center shadow-2xl">
+            <div class="text-5xl sm:text-7xl mb-2">🏆</div>
+            <h2 class="text-xl sm:text-3xl font-black text-amber-400 mb-2">Skeleton Fully Fortified!</h2>
+            <p class="text-sm sm:text-base text-slate-200 font-extrabold mb-5">Fantastic job! You successfully identified all 6 bone-preserving choices and reached 100% bone density.</p>
+            <button onclick="resetGame()" class="w-full bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-base sm:text-lg py-3 rounded-2xl shadow-xl transition transform active:scale-95">
+                Play Again 🔄
+            </button>
+        </div>
+    </div>
+
+    <!-- GAME JAVASCRIPT LOGIC -->
+    <script>
+        // 10 Intermingled Test Tubes Data with Vibrant Unique Colors
+        const items = [
+            { id: 'exercise', name: 'Exercise', correct: true, icon: '🏋️‍♂️', desc: 'Weight-bearing exercise strengthens bones and builds density!', side: 'left', group: 'top', bgGradient: 'from-amber-500/30 to-orange-600/50', border: 'border-orange-400', fillGrad: 'from-amber-500 to-orange-400', glow: 'rgba(251,146,60,0.9)' },
+            { id: 'alcohol', name: 'Alcohol', correct: false, icon: '🍺', desc: 'Excessive alcohol reduces calcium absorption and weakens bones.', side: 'left', group: 'top', bgGradient: 'from-purple-500/30 to-indigo-600/50', border: 'border-purple-400', fillGrad: 'from-purple-600 to-indigo-500', glow: 'rgba(168,85,247,0.9)' },
+            { id: 'calcium', name: 'Calcium', correct: true, icon: '🥛', desc: 'Calcium is the essential building block for strong bone structure!', side: 'left', group: 'top', bgGradient: 'from-sky-400/30 to-blue-600/50', border: 'border-sky-300', fillGrad: 'from-sky-400 to-blue-500', glow: 'rgba(56,189,248,0.9)' },
+            { id: 'unhealthy', name: 'Unhealthy Diet', correct: false, icon: '🍔', desc: 'Poor nutrition starves bones of vital minerals and vitamins.', side: 'left', group: 'bottom', bgGradient: 'from-yellow-500/30 to-amber-700/50', border: 'border-yellow-400', fillGrad: 'from-yellow-500 to-amber-600', glow: 'rgba(234,179,8,0.9)' },
+            { id: 'medication', name: 'Medication Adherence', correct: true, icon: '💊', desc: 'Following prescribed bone medications protects against bone loss.', side: 'left', group: 'bottom', bgGradient: 'from-teal-400/30 to-emerald-600/50', border: 'border-teal-300', fillGrad: 'from-teal-400 to-emerald-500', glow: 'rgba(45,212,191,0.9)' },
+            
+            { id: 'vitamin-d', name: 'Vitamin D', correct: true, icon: '☀️', desc: 'Vitamin D is crucial for absorbing calcium into your bones!', side: 'right', group: 'top', bgGradient: 'from-yellow-400/30 to-amber-500/50', border: 'border-yellow-300', fillGrad: 'from-yellow-300 to-amber-400', glow: 'rgba(253,224,71,0.9)' },
+            { id: 'caffeine', name: 'Caffeine', correct: false, icon: '☕', desc: 'High caffeine intake can slightly increase calcium loss in urine.', side: 'right', group: 'top', bgGradient: 'from-stone-500/30 to-stone-700/50', border: 'border-stone-400', fillGrad: 'from-stone-500 to-stone-600', glow: 'rgba(168,162,158,0.9)' },
+            { id: 'protein', name: 'Protein', correct: true, icon: '🥩', desc: 'Protein provides the structural matrix for healthy bone tissue!', side: 'right', group: 'top', bgGradient: 'from-rose-500/30 to-red-600/50', border: 'border-rose-400', fillGrad: 'from-rose-500 to-red-500', glow: 'rgba(244,63,94,0.9)' },
+            { id: 'smoking', name: 'Smoking', correct: false, icon: '🚬', desc: 'Smoking impairs blood flow to bones and reduces bone density.', side: 'right', group: 'bottom', bgGradient: 'from-slate-600/40 to-zinc-800/60', border: 'border-zinc-400', fillGrad: 'from-zinc-500 to-slate-700', glow: 'rgba(161,161,170,0.9)' },
+            { id: 'screening', name: 'Screening', correct: true, icon: '📋', desc: 'Bone density screenings help detect and prevent osteoporosis early!', side: 'right', group: 'bottom', bgGradient: 'from-cyan-400/30 to-blue-600/50', border: 'border-cyan-300', fillGrad: 'from-cyan-400 to-blue-500', glow: 'rgba(34,211,238,0.9)' }
+        ];
+
+        let foundCorrectCount = 0;
+        const totalCorrectNeeded = 6;
+        let selectedStatus = {};
+
+        // Initialize Game Board
+        function initGame() {
+            foundCorrectCount = 0;
+            selectedStatus = {};
+            document.getElementById('victory-modal').classList.add('hidden');
+            document.getElementById('victory-modal').classList.remove('flex');
+            updateBoneFill();
+
+            const leftTop = document.getElementById('left-tubes-top');
+            const leftBottom = document.getElementById('left-tubes-bottom');
+            const rightTop = document.getElementById('right-tubes-top');
+            const rightBottom = document.getElementById('right-tubes-bottom');
+
+            leftTop.innerHTML = items.filter(i => i.side === 'left' && i.group === 'top').map(createTubeHTML).join('');
+            leftBottom.innerHTML = items.filter(i => i.side === 'left' && i.group === 'bottom').map(createTubeHTML).join('');
+            
+            rightTop.innerHTML = items.filter(i => i.side === 'right' && i.group === 'top').map(createTubeHTML).join('');
+            rightBottom.innerHTML = items.filter(i => i.side === 'right' && i.group === 'bottom').map(createTubeHTML).join('');
+        }
+
+        function createTubeHTML(item) {
+            return `
+                <div id="tube-wrapper-${item.id}" onclick="handleTubeClick('${item.id}')" class="flex flex-col items-center cursor-pointer group w-full transition-transform hover:scale-[1.02]">
+                    <!-- Enlarged Label Box with Bigger Typography -->
+                    <div class="mb-0.5 px-1 sm:px-2 py-1 rounded-lg bg-slate-900/95 border border-slate-600/80 text-center shadow-md w-full min-h-[2.5rem] flex items-center justify-center">
+                        <span class="tube-label text-slate-100">${item.name}</span>
+                    </div>
+                    <!-- Color-Tinted Test Tube Graphic -->
+                    <div class="relative w-8 sm:w-11 h-9 sm:h-12 bg-gradient-to-b ${item.bgGradient} border-2 ${item.border} rounded-b-xl rounded-t-sm p-0.5 overflow-hidden shadow-md flex flex-col justify-end">
+                        <!-- Liquid inside Test Tube -->
+                        <div id="liquid-${item.id}" class="liquid-fill w-full rounded-b-lg bg-gradient-to-t ${item.fillGrad} opacity-70" style="height: 25%;"></div>
+                        <!-- Icon Inside Test Tube -->
+                        <div class="absolute inset-0 flex items-center justify-center text-sm sm:text-lg drop-shadow-md">
+                            ${item.icon}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Handle Test Tube Click
+        function handleTubeClick(id) {
+            const item = items.find(i => i.id === id);
+            const wrapper = document.getElementById(`tube-wrapper-${id}`);
+            const liquid = document.getElementById(`liquid-${id}`);
+
+            if (selectedStatus[id]) {
+                showFeedback(item.correct, item.name, item.desc);
+                return;
+            }
+
+            selectedStatus[id] = true;
+
+            if (item.correct) {
+                foundCorrectCount++;
+                liquid.style.height = '100%';
+                liquid.className = `liquid-fill w-full rounded-b-lg bg-gradient-to-t ${item.fillGrad} opacity-100 shadow-[0_0_12px_${item.glow}]`;
+                wrapper.classList.add('tube-selected');
+                
+                showFeedback(true, `Correct: ${item.name}!`, item.desc);
+                updateBoneFill();
+
+                if (foundCorrectCount === totalCorrectNeeded) {
+                    setTimeout(() => {
+                        const victoryModal = document.getElementById('victory-modal');
+                        victoryModal.classList.remove('hidden');
+                        victoryModal.classList.add('flex');
+                    }, 800);
+                }
+            } else {
+                // Incorrect Choice: Warning overlay triggers, but bone density DOES NOT decrease
+                liquid.style.height = '100%';
+                liquid.className = 'liquid-fill w-full rounded-b-lg bg-gradient-to-t from-rose-600 to-red-500 opacity-100 shadow-[0_0_12px_rgba(244,63,94,0.9)]';
+                
+                showFeedback(false, `Incorrect: ${item.name}`, item.desc);
+            }
+        }
+
+        // Update Bone Fill Level & Score Text
+        function updateBoneFill() {
+            const percentage = Math.round((foundCorrectCount / totalCorrectNeeded) * 100);
+            document.getElementById('density-score').innerText = percentage + '%';
+            document.getElementById('center-density-text').innerText = 'Bone Strength: ' + percentage + '%';
+
+            // Calculate SVG Y coordinate (SVG height is 400px, 0% = 400, 100% = 0)
+            const liquidRect = document.getElementById('bone-liquid-rect');
+            const targetY = 400 - (percentage * 4);
+            liquidRect.setAttribute('y', targetY);
+        }
+
+        // Show Large Center Feedback Box
+        let feedbackTimer = null;
+        function showFeedback(isCorrect, title, desc) {
+            const overlay = document.getElementById('feedback-overlay');
+            const box = document.getElementById('feedback-box');
+            const iconEl = document.getElementById('feedback-icon');
+            const titleEl = document.getElementById('feedback-title');
+            const textEl = document.getElementById('feedback-text');
+
+            if (isCorrect) {
+                box.className = 'w-full max-w-lg py-4 px-5 rounded-3xl shadow-2xl border-4 text-center transform transition-transform duration-300 backdrop-blur-2xl bg-slate-950/95 border-emerald-400 text-emerald-300 shadow-emerald-950/80';
+                iconEl.innerText = '✅';
+                titleEl.className = 'text-lg sm:text-2xl font-black uppercase tracking-wider mb-1 text-emerald-400';
+            } else {
+                box.className = 'w-full max-w-lg py-4 px-5 rounded-3xl shadow-2xl border-4 text-center transform transition-transform duration-300 backdrop-blur-2xl bg-slate-950/95 border-rose-500 text-rose-300 shadow-rose-950/80';
+                iconEl.innerText = '⚠️';
+                titleEl.className = 'text-lg sm:text-2xl font-black uppercase tracking-wider mb-1 text-rose-400';
+            }
+
+            titleEl.innerText = title;
+            textEl.innerText = desc;
+
+            overlay.classList.remove('opacity-0', 'pointer-events-none');
+            overlay.classList.add('opacity-100');
+
+            if (feedbackTimer) clearTimeout(feedbackTimer);
+            feedbackTimer = setTimeout(() => {
+                overlay.classList.remove('opacity-100');
+                overlay.classList.add('opacity-0', 'pointer-events-none');
+            }, 3200);
+        }
+
+        function resetGame() {
+            initGame();
+        }
+
+        // Initialize on load
+        window.onload = initGame;
+    </script>
+</body>
+</html>
